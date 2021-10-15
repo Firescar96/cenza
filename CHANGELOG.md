@@ -1,3 +1,13 @@
+# 3.0.1
+
+### Features
+* Added about page
+
+### Bug Fixes
+* Nginx uses a docker container with limited cpu instead of a manually built instance on the server
+* Audio chat isn't silent, and doesn't echo - includes workaround for known chrome bug
+
+
 # 3.0.0 - Oxidative Cleavage
 ### Errata
 * Rebranded Nchindacast as cenza and moved from nchinda2.com to cenza.space

@@ -30,7 +30,7 @@
         ref="liveVid"
         class="video-js vjs-default-skin"
       >
-       <source :src="'https://cenza.space:8395/hls/'+$route.params.stream+'.m3u8'" type="application/x-mpegURL">
+        <source :src="'https://cenza.space:8395/hls/'+$route.params.stream+'.m3u8'" type="application/x-mpegURL">
       </video>
     </div>
 
@@ -66,11 +66,11 @@
             Time Check
           </div>
         </div>
-        <div id="videoChats" ref="videoChats">
+        <div id="videoChats">
           <div v-for="(stream, index) in peerStreams" :key="stream.stream.id">
             {{ messaging.webrtcClient.streamToName[stream.stream.id] }}
-            <audio ref="peerVideo" :src-object.prop.camel="stream.audioStream" autoplay />
-            <input v-model="stream.volume" type="range" min="0" max="3" step="0.1" class="slider" @input="updateVolume(index)">
+            <video ref="peerVideo" :src-object.prop.camel="stream.audioStream" autoplay />
+            <input v-model="stream.volume" type="range" min="0" max="2" step="0.1" class="slider" @input="updateVolume(index)">
             {{ stream.volume }}
           </div>
         </div>
@@ -196,6 +196,7 @@ class Live {
   }
 
   mounted() {
+    window.hello = this;
     this.setupFuturisticPlayer();
     //initialize videojs with options
     this.video = videojs(this.$refs.liveVid, {

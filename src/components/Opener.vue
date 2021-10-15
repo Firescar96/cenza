@@ -4,7 +4,7 @@
     <nav>
       <a href="/streamerGuide">Streamers</a>
       <a href="/viewerGuide">Viewers</a>
-      <div>About Cenza</div>
+      <a href="/about">About Cenza</a>
     </nav>
   </div>
 </template>

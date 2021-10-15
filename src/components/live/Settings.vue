@@ -2,7 +2,7 @@
   <div id="settingsSection">
     <div id="nameSelectionBox">
       <p>My Name:</p>
-      <input id="nameSelection" v-model="messaging.myName" type="text">
+      <input v-model="messaging.myName" type="text">
     </div>
 
     <div>

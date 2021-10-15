@@ -51,9 +51,9 @@ class ClientGroupManager {
       `rtmp://cenza.space:2935/live/${this.name}`,
     ];
 
-    this.mediaStream = forever.start(mediaSpawnOptions, {
-      silent: true,
-    });
+    //this.mediaStream = forever.start(mediaSpawnOptions, {
+      //silent: true,
+    //});
   }
 
   addClient(ws) {

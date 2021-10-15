@@ -22,5 +22,15 @@ class ViewerGuide {
   #viewer-guide {
     background: black;
     color: white;
+    padding: 2% 5%;
+
+    input[type=text] {
+      background: transparent;
+      border: none;
+      border-bottom: solid 1px white;
+      outline: none;
+      padding: 0 5px;
+      color: white;
+    }
   }
 </style>

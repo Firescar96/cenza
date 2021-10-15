@@ -1,0 +1,1 @@
+docker run --cpus="1.0" --network=host -v /mnt:/mnt -d -v "/etc/letsencrypt:/etc/letsencrypt" -v "/root/cenza/nginx/nginx.config:/etc/nginx/nginx.conf.template" alfg/nginx-rtmp

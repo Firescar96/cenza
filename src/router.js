@@ -7,5 +7,6 @@ export default new VueRouter({
     { path: '/live/:stream', component: () => import('@/components/live/Live') },
     { path: '/streamerGuide', component: () => import('@/components/streamerGuide/StreamerGuide') },
     { path: '/viewerGuide', component: () => import('@/components/ViewerGuide') },
+    { path: '/about', component: () => import('@/components/about/About') },
   ],
 });
