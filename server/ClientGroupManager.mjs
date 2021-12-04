@@ -52,7 +52,7 @@ class ClientGroupManager {
     ];
 
     //this.mediaStream = forever.start(mediaSpawnOptions, {
-      //silent: true,
+    //silent: true,
     //});
   }
 

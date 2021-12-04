@@ -15,7 +15,7 @@
 
     <header>Credits</header>
     <ul>
-      <li>Grace Amos of <a href="https://www.elewaletters.com">Elewa</a> for logo design. Which I paid for because good things in life aren't free, and she gave me a discount on because that's what friends do.</li>
+      <li>Grace Amos of Elewa for logo design. Which I paid for because good things in life aren't free, and she gave me a discount on because that's what friends do. You can't hire them because I was the last customer.</li>
       <li><a href="https://www.ovenmediaengine.com/ome">OvenMediaEngine</a> for stitching together complex streaming protocols into an accessible format.</li>
       <li><a href="https://videojs.com">Video.js</a> for being a world class video player</li>
       <li><a href="vuejs.org/">Vue.js</a> for putting React.js and especially Angular.js to shame</li>

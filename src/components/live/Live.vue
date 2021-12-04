@@ -69,8 +69,7 @@
         <div id="videoChats">
           <div v-for="(stream, index) in peerStreams" :key="stream.stream.id">
             {{ messaging.webrtcClient.streamToName[stream.stream.id] }}
-            <video ref="peerVideo" :src-object.prop.camel="stream.audioStream" autoplay />
-            <input v-model="stream.volume" type="range" min="0" max="2" step="0.1" class="slider" @input="updateVolume(index)">
+            <input v-model="stream.volume" type="range" min="0" max="3" step="0.1" class="slider" @input="updateVolume(index)">
             {{ stream.volume }}
           </div>
         </div>
@@ -508,7 +507,7 @@ class Live {
   .video-js {
     /* The base font size controls the size of everything, not just text.
       All dimensions use em-based sizes so that the scale along with the font size.
-      Try increasing it to 15px and see what happens. */
+    */
     font-size: 20px;
 
     /* The main font color changes the ICON COLORS as well as the text */
@@ -520,18 +519,11 @@ class Live {
       pointer-events: none;
     }
 
-    video {
-      outline: none;
-    }
-
     /* The default color of control backgrounds is mostly black but with a little
       bit of blue so it can still be seen on all-black video frames, which are common. */
     .vjs-control-bar,
     .vjs-big-play-button,
     .vjs-menu-button .vjs-menu-content {
-      /* IE8 - has no alpha support */
-      background-color: $primary-background-color;
-      /* Opacity: 1.0 = 100%, 0.0 = 0% */
       background-color: rgba($primary-background-color, 0.9);
     }
 
@@ -552,9 +544,6 @@ class Live {
       background: $primary-foreground-color;
     }
 
-    .vjs-live-control {
-      display: none;
-    }
     .vjs-seek-to-live-control {
       display: flex;
       margin-left: auto;
@@ -562,18 +551,12 @@ class Live {
 
     /* The main progress bar also has a bar that shows how much has been loaded. */
     .vjs-load-progress {
-      /* For IE8 we'll lighten the color */
-      background: ligthen($slider-bg-color, 80%);
-      /* Otherwise we'll rely on stacked opacities */
       background: rgba($slider-bg-color, 0.8);
     }
 
     /* The load progress bar also has internal divs that represent
       smaller disconnected loaded time ranges */
     .vjs-load-progress div {
-      /* For IE8 we'll lighten the color */
-      background: ligthen($slider-bg-color, 80%);
-      /* Otherwise we'll rely on stacked opacities */
       background: rgba($slider-bg-color, 0.9);
     }
   }

@@ -39,7 +39,7 @@ class WebRTCClient {
       const audioSource = audioContext.createMediaStreamSource(stream);
       audioSource.connect(audioGainNode);
       audioGainNode.connect(audioContext.destination);
-      audioGainNode.gain.value = 0.3;
+      audioGainNode.gain.value = 1.5;
       //without this reference the stream doesnt get activated or something and the audio wont come through
       //https://stackoverflow.com/questions/63296568/webaudio-connecting-stream-to-destination-doesnt-work
       //https://bugs.chromium.org/p/chromium/issues/detail?id=933677&q=webrtc%20silent&can=2
@@ -47,8 +47,7 @@ class WebRTCClient {
       new Audio().srcObject = stream;
       this.videoController.$set(this.videoController.peerStreams, this.videoController.peerStreams.length, {
         stream, //original stream is used to track with peer is connected and eventually can be used for video
-        audioStream: audioContext.destination, //this supports gain
-        volume: 0.5,
+        volume: 1.5,
         audioGainNode,
       });
     });
