@@ -28,7 +28,7 @@
     <div v-show="showUnlivePlayer" id="unlive-player">
       <video
         ref="liveVid"
-        class="video-js vjs-default-skin"
+        class="video-js vjs-default-skin vjs-has-started"
       >
         <source :src="'https://cenza.space:8395/hls/'+$route.params.stream+'.m3u8'" type="application/x-mpegURL">
       </video>
@@ -156,6 +156,7 @@ class Live {
       triggerRemoteSync: false, //when false don't propagate actions to everyone, they are updating our local current time
       lastSyncedTime: null,
       notJoinedStream: true,
+      isPaused: true,
       isLivePaused: true,
       isLiveVideo: null,
       liveVolumeLevel: 1,
@@ -363,7 +364,11 @@ class Live {
       this.showingProgressBar = true;
       this.video.src(`https://cenza.space:8395/hls/${this.$route.params.stream}.m3u8`);
     }
+    //videojs won't finish loading completely unless the play actions is started
     await this.video.play();
+
+    //even if it gets paused later
+    if(this.isPaused) this.video.pause();
 
     this.isLiveVideo = false;
   }
@@ -542,6 +547,10 @@ class Live {
     .vjs-play-progress,
     .vjs-slider-bar {
       background: $primary-foreground-color;
+
+      .vjs-mouse-display {
+        margin-top: 10px;
+      }
     }
 
     .vjs-seek-to-live-control {

@@ -117,6 +117,7 @@ class MessagingManager {
       }
 
       if(this.streamJoined && 'isPaused' in message) {
+        this.videoController.isPaused = message.isPaused;
         const action = message.isPaused ? 'pause' : 'play';
         if(this.videoController.isLiveVideo) {
           this.videoController.livePlayer[action]();
