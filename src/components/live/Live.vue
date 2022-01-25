@@ -392,6 +392,10 @@ class Live {
 
   changeSection(name) {
     this.selectedSection = name;
+
+    //this creates the popup for the user to give microphone access
+    //it's here to catch the user when they are probably going to the settings page, well after page load
+    navigator.mediaDevices.getUserMedia({ audio: true, video: false });
   }
 }
 </script>

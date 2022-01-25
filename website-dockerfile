@@ -1,0 +1,14 @@
+FROM node
+ENV PORT 80
+
+RUN apt-get update
+RUN apt-get install -y ffmpeg
+
+WORKDIR /root
+
+ADD dist dist
+ADD app.mjs .
+ADD server server
+ADD node_modules node_modules
+
+CMD node app.mjs

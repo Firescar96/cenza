@@ -1,0 +1,10 @@
+FROM alfg/nginx-rtmp
+RUN apk add --no-cache python3-dev py3-pip
+RUN pip install --upgrade pip
+# used by certbot
+RUN apk add --no-cache libffi-dev gcc musl-dev
+RUN pip install certbot-dns-google certbot
+COPY cenza-google-service.json cenza-google-service.json
+RUN certbot register -m nchinda2@gmail.com --no-eff-email --agree-tos
+RUN certbot certonly -d cenza.space --dns-google --dns-google-credentials cenza-google-service.json
+COPY nginx.config /etc/nginx/nginx.conf.template

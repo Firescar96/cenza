@@ -1,16 +1,10 @@
 import engineio from 'engine.io';
-import { httpServer, httpsServer } from './server.mjs';
+import httpServer from './server.mjs';
 import { ClientGroupManager } from './ClientGroupManager.mjs';
 
 const liveWS = engineio();
 
 liveWS.attach(httpServer, {
-  pingTimeout: 2000,
-  pingInterval: 4000,
-  transports: ['websocket'],
-});
-
-liveWS.attach(httpsServer, {
   pingTimeout: 2000,
   pingInterval: 4000,
   transports: ['websocket'],
