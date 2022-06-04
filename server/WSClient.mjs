@@ -10,7 +10,7 @@ class WSClient {
 
     this.webrtcConnection = new SimplePeer({
       wrtc,
-      initiator: true,
+      initiator: false,
     });
 
     this.streams = {};

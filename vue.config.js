@@ -24,4 +24,7 @@ module.exports = {
       },
     },
   },
+  devServer: {
+    allowedHosts: ['localhost.test', 'localhost'],
+  },
 };

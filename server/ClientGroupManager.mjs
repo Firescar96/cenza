@@ -74,7 +74,14 @@ class ClientGroupManager {
       if(!this.clients[ws.id]) return;
       switch(data.flag) {
         case 'webrtcSignal':
-          this.clients[ws.id].webrtcConnection.signal(data.signal);
+          try {
+            this.clients[ws.id].webrtcConnection.signal(data.signal);
+          } catch (error) {
+            //if the user refreshes in the middle of signaling don't crash the whole server
+            //we stop webrtc signaling, and the connection will be gracefully cleaned up when the websocket connection detects the peer connection is closed
+            if(error.code == 'ERR_DESTROYED') break;
+            throw error;
+          }
           break;
         case 'syncResponse': {
           this.clients[ws.id].lastFrameTime = data.lastFrameTime;
@@ -84,7 +91,6 @@ class ClientGroupManager {
 
           const numSyncResponses = Object.values(this.clients).reduce((a, b) => (b.ackedSyncRequest ? a + 1 : a), 0);
 
-          console.log('numResponsesRequested', this.numResponsesRequested);
           if(numSyncResponses < this.numResponsesRequested) break;
 
           let maximumTime = Number.MIN_SAFE_INTEGER;
@@ -191,7 +197,14 @@ class ClientGroupManager {
       clientObject.streams[stream.id] = stream;
       Object.values(this.clients).forEach((client) => {
         if(client.id === ws.id) return;
-        client.webrtcConnection.addStream(stream);
+
+        try {
+          client.webrtcConnection.addStream(stream);
+        } catch (error) {
+          //if the user refreshes in the middle of receiving the new stream
+          if(error.code == 'ERR_DESTROYED') return;
+          throw error;
+        }
       });
     });
 
@@ -199,7 +212,15 @@ class ClientGroupManager {
       Object.values(this.clients).forEach((client) => {
         if(client.id === clientObject.id) return;
         Object.values(client.streams).forEach((stream) => {
-          clientObject.webrtcConnection.addStream(stream);
+          try {
+            clientObject.webrtcConnection.addStream(stream);
+          } catch (error) {
+            //I've seen this error while debugging the cenza ui, which involves vue refreshing parts of the ui after changes
+            //it somewhat makes sense, that a refresh on the webrtc code in the frontend could trigger the same stream to connected multiple times
+            //it has not yet been seen in production
+            if(error.code == 'ERR_SENDER_ALREADY_ADDED') return;
+            throw error;
+          }
         });
       });
     });
@@ -221,7 +242,7 @@ class ClientGroupManager {
     Object.values(this.clients).forEach((client) => {
       client.webrtcConnection.destroy();
     });
-    this.mediaStream.kill();
+    //this.mediaStream.kill();
   }
 }
 

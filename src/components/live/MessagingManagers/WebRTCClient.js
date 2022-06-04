@@ -20,11 +20,9 @@ const { SimplePeer } = window;
 class WebRTCClient {
   created() {
     this.selectedStream = null;
-
-    this.setupWebRTCConnection();
-    this.getDevices();
   }
 
+  //https://dev.to/focusedlabs/echo-cancellation-with-web-audio-api-and-chromium-1f8m
   async createLoopbackStream(stream) {
     this.rtcConnection = null;
     this.rtcLoopbackConnection = null;
@@ -45,18 +43,17 @@ class WebRTCClient {
     this.rtcConnection.onicecandidate = (e) => e.candidate && this.rtcLoopbackConnection.addIceCandidate(new RTCIceCandidate(e.candidate));
     this.rtcLoopbackConnection.onicecandidate = (e) => e.candidate && this.rtcConnection.addIceCandidate(new RTCIceCandidate(e.candidate));
 
-    this.rtcLoopbackConnection.ontrack = (e) => e.streams[0].getTracks().forEach((track) => loopbackStream.addTrack(track));
+    this.rtcLoopbackConnection.ontrack = (e) => loopbackStream.addTrack(e.track);
 
     //setup the loopback
-    this.rtcConnection.addStream(stream); //this stream would be the processed stream coming out of Web Audio API destination node
+    stream.getTracks().forEach((x) => this.rtcConnection.addTrack(x)); //this stream would be the processed stream coming out of Web Audio API destination node
 
     const offer = await this.rtcConnection.createOffer(offerOptions);
     await this.rtcConnection.setLocalDescription(offer);
-
     await this.rtcLoopbackConnection.setRemoteDescription(offer);
+
     const answer = await this.rtcLoopbackConnection.createAnswer();
     await this.rtcLoopbackConnection.setLocalDescription(answer);
-
     await this.rtcConnection.setRemoteDescription(answer);
 
     return loopbackStream;
@@ -64,34 +61,43 @@ class WebRTCClient {
 
   setupWebRTCConnection() {
     this.connection = new SimplePeer({
-      initiator: false,
+      initiator: true,
       trickle: false,
     });
 
     //it's important this stream handler is placed early on, before the signal handler so we don't miss any messages from peers
-    this.connection.on('stream', async (stream) => {
+    this.connection.on('stream', async (sourceStream) => {
       const audioContext = new AudioContext();
+      //https://dev.to/focusedlabs/echo-cancellation-with-web-audio-api-and-chromium-1f8m
+      //according to ^ we have to create a destination instead of using audioContext.destination
       const destinationNode = audioContext.createMediaStreamDestination();
       const audioGainNode = audioContext.createGain();
 
-      const audioSource = audioContext.createMediaStreamSource(stream);
+      const audioSource = audioContext.createMediaStreamSource(sourceStream);
       audioSource.connect(audioGainNode);
-      audioGainNode.connect(audioContext.destination);
+      audioGainNode.connect(destinationNode);
       audioGainNode.gain.value = 1.5;
 
-      //experimental trying to fix loopback
-      const loopbackStream = await this.createLoopbackStream(stream);
+      //experimental trying to fix loopbacks
+      const loopbackStream = await this.createLoopbackStream(destinationNode.stream);
 
       //without this reference the stream doesnt get activated or something and the audio wont come through
       //https://stackoverflow.com/questions/63296568/webaudio-connecting-stream-to-destination-doesnt-work
       //https://bugs.chromium.org/p/chromium/issues/detail?id=933677&q=webrtc%20silent&can=2
+      //the stream variable gets implictly activated in the same way by getting attached to the loopbackStream
+      new Audio().srcObject = sourceStream;
 
-      new Audio().srcObject = loopbackStream;
-      this.videoController.$set(this.videoController.peerStreams, this.videoController.peerStreams.length, {
-        stream, //original stream is used to track with peer is connected and eventually can be used for video
+      this.$set(this.videoController.peerStreams, this.videoController.peerStreams.length, {
+        //sourceStream is used to track with peer is connected
+        sourceStream,
         volume: 1.5,
         audioGainNode,
       });
+
+      //wait for the ui to reload and create a new video object before
+      await this.$nextTick();
+      //setting the source of the video object
+      this.videoController.$refs.peerStreamVideo[this.videoController.peerStreams.length - 1].srcObject = loopbackStream;
     });
 
     this.connection.on('error', () => this.setupWebRTCConnection());
@@ -155,12 +161,14 @@ class WebRTCClient {
 
     this.selectedStream = stream;
     this.connection.addStream(stream);
+    this.audioInputEnabled = false;
   }
 
   async changeAudioSource(audioSource) {
     const constraints = {
       audio: { deviceId: audioSource ? { exact: audioSource } : undefined },
     };
+
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
     await this.gotStream(stream);

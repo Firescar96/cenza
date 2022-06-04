@@ -44,12 +44,12 @@
     <div id="chatSideBar" :class="{minimized: chatMinimized}">
       <i id="minimizeButton" class="material-icons" @click="toggleSideBar">keyboard_arrow_right</i>
 
-      <div id="triggersContainer">
+      <div class="triggersContainer">
         <h3 id="chatTitle">
           conTROLLbox - <span class="capitalize">{{ selectedSection }}</span>
         </h3>
       </div>
-      <div id="triggersContainer">
+      <div class="triggersContainer">
         <div @click="changeSection('comms')">
           Comms
         </div>
@@ -58,7 +58,7 @@
         </div>
       </div>
       <div v-show="selectedSection == 'comms'" id="commsSection">
-        <div id="triggersContainer">
+        <div class="triggersContainer">
           <div id="sync" @click="messaging.sendMessage({flag: 'syncToMe'})">
             Sync To Me
           </div>
@@ -67,9 +67,10 @@
           </div>
         </div>
         <div id="videoChats">
-          <div v-for="(stream, index) in peerStreams" :key="stream.stream.id">
-            {{ messaging.webrtcClient.streamToName[stream.stream.id] }}
-            <input v-model="stream.volume" type="range" min="0" max="3" step="0.1" class="slider" @input="updateVolume(index)">
+          <div v-for="(stream, index) in peerStreams" :key="stream.sourceStream.id">
+            <video ref="peerStreamVideo" autoplay />
+            {{ messaging.webrtcClient.streamToName[stream.sourceStream.id] }}
+            <input v-model="stream.volume" type="range" min="0" max="5" step="0.1" class="slider" @input="updateVolume(index)">
             {{ stream.volume }}
           </div>
         </div>
@@ -192,11 +193,9 @@ class Live {
     this.livePlayer = this.$refs.futuristicPlayer;
     this.livePlayer.srcObject = new MediaStream();
     //this.livePlayer.pause();
-    window.livePlayer = this.livePlayer;
   }
 
-  mounted() {
-    window.hello = this;
+  async mounted() {
     this.setupFuturisticPlayer();
     //initialize videojs with options
     this.video = videojs(this.$refs.liveVid, {
@@ -240,16 +239,16 @@ class Live {
       this.video.controlBar.progressControl.seekBar.on('mouseup', eventHandlers.seek);
       this.video.controlBar.seekForward.on('click', eventHandlers.seekForward);
       this.video.controlBar.seekBack.on('click', eventHandlers.seekBack);
-      this.video.controlBar.seekToLive.on('click', () => {
-        this.switchToLive();
-        eventHandlers.seekToLive();
-      });
+      this.video.controlBar.seekToLive.on('click', eventHandlers.seek);
+      //this.video.controlBar.seekToLive.on('click', () => {
+      //this.switchToLive();
+      //eventHandlers.seekToLive();
+      //});
     });
 
     //overwrite the meaning of fullscreen so it always includes the chat
     this.video.requestFullscreen = this.goFullScreen;
     this.video.exitFullscreen = this.goFullScreen;
-    window.video = this.video;
   }
 
   jumpToTime(time) {
@@ -300,6 +299,7 @@ class Live {
   }
 
   joinStream() {
+    this.showUnlivePlayer = true;
     this.notJoinedStream = false;
     this.messaging.streamJoined = true;
     //on join request an update to the current time and status of peers
@@ -390,12 +390,8 @@ class Live {
     this.peerStreams[index].audioGainNode.gain.value = this.peerStreams[index].volume;
   }
 
-  changeSection(name) {
+  async changeSection(name) {
     this.selectedSection = name;
-
-    //this creates the popup for the user to give microphone access
-    //it's here to catch the user when they are probably going to the settings page, well after page load
-    navigator.mediaDevices.getUserMedia({ audio: true, video: false });
   }
 }
 </script>
@@ -632,7 +628,7 @@ class Live {
       width: 300px;
     }
 
-    #triggersContainer {
+    .triggersContainer {
       display: flex;
       justify-content: space-around;
       margin: 10px 0;

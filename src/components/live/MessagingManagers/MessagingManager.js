@@ -54,7 +54,7 @@ class MessagingManager {
 
       //filter out disconnected streams
       const currentStreams = new Set(Object.keys(message.streamToName));
-      this.videoController.peerStreams = this.videoController.peerStreams.filter((x) => currentStreams.has(x.stream.id));
+      this.videoController.peerStreams = this.videoController.peerStreams.filter((x) => currentStreams.has(x.sourceStream.id));
     }
 
     if(message.flag == 'liveStreamData') {
@@ -65,6 +65,7 @@ class MessagingManager {
 
     //Coming Soon
     if(message.flag == 'webrtcSignal') {
+      if(!this.webrtcClient.connection) return;
       this.webrtcClient.connection.signal(message.signal);
       return;
     }

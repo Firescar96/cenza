@@ -24,3 +24,4 @@ public/*
 cert.pem
 privkey.pem
 certificate.yaml
+nginx/cenza-google-service.json
