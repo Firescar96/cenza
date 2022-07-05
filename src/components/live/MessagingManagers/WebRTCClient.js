@@ -1,5 +1,6 @@
 import Component from 'vue-class-component';
 import { shallowRef } from '@vue/composition-api';
+import liveInterfaces from '@/components/live/liveInterfaces';
 
 const { SimplePeer } = window;
 
@@ -87,7 +88,7 @@ class WebRTCClient {
       //the stream variable gets implictly activated in the same way by getting attached to the loopbackStream
       new Audio().srcObject = sourceStream;
 
-      this.$set(this.videoController.peerStreams, this.videoController.peerStreams.length, {
+      this.$set(liveInterfaces.videoController.peerStreams, liveInterfaces.videoController.peerStreams.length, {
         //sourceStream is used to track with peer is connected
         sourceStream,
         volume: 1.5,
@@ -97,7 +98,7 @@ class WebRTCClient {
       //wait for the ui to reload and create a new video object before
       await this.$nextTick();
       //setting the source of the video object
-      this.videoController.$refs.peerStreamVideo[this.videoController.peerStreams.length - 1].srcObject = loopbackStream;
+      liveInterfaces.videoController.$refs.peerStreamVideo[liveInterfaces.videoController.peerStreams.length - 1].srcObject = loopbackStream;
     });
 
     this.connection.on('error', () => this.setupWebRTCConnection());
@@ -107,7 +108,7 @@ class WebRTCClient {
         flag: 'webrtcSignal',
         signal,
       });
-      this.websocketConnection.send(rawdata);
+      liveInterfaces.websocketClient.connection.send(rawdata);
     });
   }
 
@@ -146,8 +147,8 @@ class WebRTCClient {
 
   //Attach audio output device to video element using device/sink ID.
   changeAudioSink(audioDestination) {
-    if(!this.videoController.$refs.peerVideo) return;
-    this.videoController.$refs.peerVideo.forEach((videoElement) => {
+    if(!liveInterfaces.videoController.$refs.peerVideo) return;
+    liveInterfaces.videoController.$refs.peerVideo.forEach((videoElement) => {
       if(typeof videoElement.sinkId !== 'undefined') {
         videoElement.setSinkId(audioDestination);
       } else {
@@ -176,4 +177,4 @@ class WebRTCClient {
   }
 }
 
-export default WebRTCClient;
+liveInterfaces.webrtcClient = new WebRTCClient();

@@ -83,7 +83,7 @@ class ClientGroupManager {
             throw error;
           }
           break;
-        case 'syncResponse': {
+        case 'videoControl.syncResponse': {
           this.clients[ws.id].lastFrameTime = data.lastFrameTime;
           this.clients[ws.id].isPaused = data.isPaused;
           this.clients[ws.id].ackedSyncRequest = true;
@@ -104,7 +104,7 @@ class ClientGroupManager {
           if(maximumTime == Number.MIN_SAFE_INTEGER) break;
           this.clientsWaitingToSync.forEach((clientWS) => {
             const responseMessage = {
-              flag: 'syncResponse',
+              flag: 'videoControl.syncResponse',
               lastFrameTime: maximumTime,
               isLiveVideo: this.isLiveVideo,
               isPaused,
@@ -128,7 +128,7 @@ class ClientGroupManager {
           //there will be clients who have connected to the server but have not yet joined the stream
           if(!syncedClients) {
             const responseMessage = {
-              flag: 'syncResponse',
+              flag: 'videoControl.syncResponse',
               isLiveVideo: false,
               isPaused: false,
             };
@@ -149,7 +149,7 @@ class ClientGroupManager {
 
           break;
         }
-        case 'syncToMe': {
+        case 'videoControl.syncToMe': {
           this.broadcastMessage(rawdata, ws);
           break;
         }

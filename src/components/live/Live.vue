@@ -59,17 +59,17 @@
       </div>
       <div v-show="selectedSection == 'comms'" id="commsSection">
         <div class="triggersContainer">
-          <div id="sync" @click="messaging.sendMessage({flag: 'syncToMe'})">
+          <div id="sync" @click="liveInterfaces.websocketClient.sendMessage({flag: 'videoControl.syncToMe'})">
             Sync To Me
           </div>
-          <div id="sync" @click="messaging.sendMessage({flag: 'clientStatus'})">
+          <div id="sync" @click="liveInterfaces.websocketClient.sendMessage({flag: 'clientStatus'})">
             Time Check
           </div>
         </div>
         <div id="videoChats">
           <div v-for="(stream, index) in peerStreams" :key="stream.sourceStream.id">
             <video ref="peerStreamVideo" autoplay />
-            {{ messaging.webrtcClient.streamToName[stream.sourceStream.id] }}
+            {{ liveInterfaces.webrtcClient.streamToName[stream.sourceStream.id] }}
             <input v-model="stream.volume" type="range" min="0" max="5" step="0.1" class="slider" @input="updateVolume(index)">
             {{ stream.volume }}
           </div>
@@ -119,15 +119,15 @@
           <span>{{ currentlyTyping.join(', ') }}</span>
           {{ currentlyTyping.length == 1? 'is': 'are' }} typing ...
         </div>
-        <div v-if="messaging" id="chatInput">
+        <div id="chatInput">
           <i id="chatBubble" class="material-icons">insert_comment</i>
-          <i v-if="!messaging.webrtcClient.selectedStream" v-b-tooltip.hover="'Visit your settings to choose an audio input device to enable chatting'" class="microphoneBubble micNone material-icons">mic_off</i>
-          <i v-else-if="messaging.webrtcClient.audioInputEnabled" class="microphoneBubble micOn material-icons" @click="messaging.webrtcClient.audioInputEnabled = false">mic</i>
-          <i v-else-if="!messaging.webrtcClient.audioInputEnabled" class="microphoneBubble micOff material-icons" @click="messaging.webrtcClient.audioInputEnabled = true">mic_off</i>
+          <i v-if="!liveInterfaces.webrtcClient.selectedStream" v-b-tooltip.hover="'Visit your settings to choose an audio input device to enable chatting'" class="microphoneBubble micNone material-icons">mic_off</i>
+          <i v-else-if="liveInterfaces.webrtcClient.audioInputEnabled" class="microphoneBubble micOn material-icons" @click="liveInterfaces.webrtcClient.audioInputEnabled = false">mic</i>
+          <i v-else-if="!liveInterfaces.webrtcClient.audioInputEnabled" class="microphoneBubble micOff material-icons" @click="liveInterfaces.webrtcClient.audioInputEnabled = true">mic_off</i>
           <input v-model="newMessage" type="text" placeholder="...write a message and press enter" @input="chatOnTyping" @keyup.enter="sendChat">
         </div>
       </div>
-      <Settings v-show="selectedSection == 'settings'" v-if="messaging" :messaging="messaging" />
+      <Settings v-show="selectedSection == 'settings'" />
     </div>
   </div>
 </template>
@@ -139,9 +139,10 @@ import videojs from 'video.js';
 //eslint-disable-next-line no-unused-vars
 import seekButtons from 'videojs-seek-buttons';
 import { openFullscreen, closeFullscreen } from '@/utility';
-import MessagingManager from './MessagingManagers/MessagingManager';
+import './MessagingManagers/MessagingManager';
 import constants from '@/components/constants';
 import Settings from './Settings';
+import liveInterfaces from '@/components/live/liveInterfaces';
 
 const { SKIP_BACK_SECONDS, SKIP_FORWARD_SECONDS } = constants;
 
@@ -151,6 +152,8 @@ export default
 })
 class Live {
   data() {
+    this.liveInterfaces = liveInterfaces;
+
     return {
       messages: [],
       newMessage: '',
@@ -160,6 +163,7 @@ class Live {
       isPaused: true,
       isLivePaused: true,
       isLiveVideo: null,
+      streamJoined: false,
       liveVolumeLevel: 1,
       showingProgressBar: false,
       showLivePlayer: false,
@@ -168,7 +172,6 @@ class Live {
       isFullscreen: false,
       chatMinimized: false,
       //webrtc things
-      messaging: null,
       peerStreams: [],
       selectedSection: 'comms',
     };
@@ -176,17 +179,21 @@ class Live {
 
   toHumanReadable(input) {
     switch(input) {
-      case 'seekForward':
+      case 'videoControl.seekForward':
         return 'Jump Forward';
-      case 'seekBack':
+      case 'videoControl.seekBack':
         return 'Jump Back';
-      case 'seekToLive':
+      case 'videoControl.seekToLive':
         return 'LIVE';
-      case 'seekToUnlive':
+      case 'videoControl.seekToUnlive':
         return 'UNLIVE';
       default:
-        return input;
+        return input.replace('videoControl.', '');
     }
+  }
+
+  created() {
+    liveInterfaces.videoController = this;
   }
 
   setupFuturisticPlayer() {
@@ -225,10 +232,10 @@ class Live {
       backIndex: 0,
     });
 
-    this.messaging = new MessagingManager(this.$route.params.stream, this);
+    liveInterfaces.messagingManager.initialize(this.$route.params.stream);
     this.messages = [{ isMeta: true, name: 'Meta', text: 'Welcome, make sure to set your name in the settings.' }, { isMeta: true, name: 'Meta', text: 'Live video is in beta. Voice chat is in beta. You have been warned.' }];
 
-    const { eventHandlers } = this.messaging;
+    const { eventHandlers } = liveInterfaces.websocketClient;
 
     //onReady setup the handlers for different user interactions
     this.video.on('ready', () => {
@@ -253,7 +260,7 @@ class Live {
 
   jumpToTime(time) {
     this.video.currentTime(time);
-    this.messaging.sendMessage({ flag: 'sync-trigger' });
+    this.liveInterfaces.websocketClient.sendMessage({ flag: 'sync-trigger' });
   }
 
   sendChat() {
@@ -262,9 +269,9 @@ class Live {
       text: this.newMessage,
     };
 
-    this.messaging.sendMessage(message);
+    this.liveInterfaces.websocketClient.sendMessage(message);
     this.newMessage = '';
-    this.messaging.isActiveTyping = false;
+    liveInterfaces.messagingManager.isActiveTyping = false;
 
     this.displayMessage(message, true);
   }
@@ -301,9 +308,9 @@ class Live {
   joinStream() {
     this.showUnlivePlayer = true;
     this.notJoinedStream = false;
-    this.messaging.streamJoined = true;
+    this.streamJoined = true;
     //on join request an update to the current time and status of peers
-    this.messaging.sendMessage({ flag: 'syncRequest' });
+    this.liveInterfaces.websocketClient.sendMessage({ flag: 'syncRequest' });
   }
 
   goFullScreen() {
@@ -315,13 +322,13 @@ class Live {
   async livePlay() {
     await this.livePlayer.play();
     //on play resynchronize back to the beginning
-    this.messaging.sendMessage({ flag: 'play', isPaused: false, action: 'syncAction' });
+    this.liveInterfaces.websocketClient.sendMessage({ flag: 'play', isPaused: false, action: 'syncAction' });
     this.isLivePaused = false;
   }
 
   livePause() {
     this.livePlayer.pause();
-    this.messaging.sendMessage({ flag: 'pause', isPaused: true, action: 'syncAction' });
+    this.liveInterfaces.websocketClient.sendMessage({ flag: 'pause', isPaused: true, action: 'syncAction' });
     this.isLivePaused = true;
   }
 
@@ -331,7 +338,7 @@ class Live {
 
   liveUnlive() {
     this.switchToUnlive();
-    this.messaging.sendMessage({ flag: 'seekToUnlive', replace: true, action: 'syncAction' });
+    this.liveInterfaces.websocketClient.sendMessage({ flag: 'seekToUnlive', replace: true, action: 'syncAction' });
   }
 
   switchToLive() {
@@ -374,7 +381,7 @@ class Live {
   }
 
   chatOnTyping() {
-    this.messaging.isActiveTyping = !!this.newMessage;
+    liveInterfaces.messagingManager.isActiveTyping = !!this.newMessage;
   }
 
   toggleSideBar() {

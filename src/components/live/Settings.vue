@@ -2,7 +2,7 @@
   <div id="settingsSection">
     <div id="nameSelectionBox">
       <p>My Name:</p>
-      <input v-model="messaging.myName" type="text">
+      <input v-model="liveInterfaces.messagingManager.myName" type="text">
     </div>
 
     <div v-if="audioEnabled == 'disabled'" id="disabled-audio">
@@ -14,7 +14,7 @@
       Audio Inputs
       <v-select
         v-model="selectedAudioSource"
-        :options="messaging.webrtcClient.audioInputs"
+        :options="liveInterfaces.webrtcClient.audioInputs"
         :reduce="x => x.value"
         append-to-body
         @input="changeAudioSource"
@@ -22,7 +22,7 @@
       Audio Outputs
       <v-select
         v-model="selectedAudioSink"
-        :options="messaging.webrtcClient.audioOutputs"
+        :options="liveInterfaces.webrtcClient.audioOutputs"
         :reduce="x => x.value"
         append-to-body
         @input="changeAudioSink"
@@ -35,18 +35,14 @@
 </template>
 <script>
 import Component from 'vue-class-component';
+import liveInterfaces from '@/components/live/liveInterfaces';
 
 export default
-@Component({
-  props: {
-    messaging: {
-      type: Object,
-      required: true,
-    },
-  },
-})
+@Component({})
 class Settings {
   data() {
+    this.liveInterfaces = liveInterfaces;
+
     return {
       selectedAudioSource: null,
       selectedAudioSink: null,
@@ -59,11 +55,11 @@ class Settings {
   }
 
   changeAudioSource() {
-    this.messaging.webrtcClient.changeAudioSource(this.selectedAudioSource);
+    this.liveInterfaces.webrtcClient.changeAudioSource(this.selectedAudioSource);
   }
 
   changeAudioSink() {
-    this.messaging.webrtcClient.changeAudioSink(this.selectedAudioSink);
+    this.liveInterfaces.webrtcClient.changeAudioSink(this.selectedAudioSink);
   }
 
   async enableAudio() {
@@ -81,10 +77,10 @@ class Settings {
     this.audioEnabled = 'enabled';
     localStorage.setItem('audioEnabled', 'enabled');
 
-    this.messaging.webrtcClient.setupWebRTCConnection();
-    await this.messaging.webrtcClient.getDevices();
-    if(this.messaging.webrtcClient.audioInputs.length) {
-      this.selectedAudioSource = this.messaging.webrtcClient.audioInputs[0].value;
+    this.liveInterfaces.webrtcClient.setupWebRTCConnection();
+    await this.liveInterfaces.webrtcClient.getDevices();
+    if(this.liveInterfaces.webrtcClient.audioInputs.length) {
+      this.selectedAudioSource = this.liveInterfaces.webrtcClient.audioInputs[0].value;
       this.changeAudioSource();
     }
   }
