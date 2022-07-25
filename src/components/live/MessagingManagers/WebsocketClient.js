@@ -1,27 +1,42 @@
-import engineio from 'engine.io-client';
+import { io } from 'socket.io-client';
 import liveInterfaces from '@/components/live/liveInterfaces';
 import constants from '@/components/constants';
 
 const { SKIP_BACK_SECONDS } = constants;
 
 class WebsocketClient {
-  initialize() {
+  initialize(roomName) {
     const route = new URL(window.location.href);
-    route.protocol = route.protocol.replace('http', 'ws');
+    //route.protocol = route.protocol.replace('http', 'ws');
+    route.pathname = '';
     if(route.port) route.port = 8080;
 
-    this.connection = engineio(route.href, { transports: ['websocket'] });
+    this.connection = io(route.href);
     //join can only be issued once and determines which group of viewers is joined
-    this.connection.send(JSON.stringify({ flag: 'join' }));
+    this.connection.send(JSON.stringify({ flag: 'join', roomName }));
 
     this.connection.on('message', this.receiveData.bind(this));
 
-    this.connection.on('open', () => {
+    this.connection.on('connect', () => {
       setInterval(() => {
         this.sendMessage({ flag: 'ping', name: liveInterfaces.messagingManager.myName });
       }, 500);
 
       this.sendMessage({ flag: 'peerConnect', name: liveInterfaces.messagingManager.myName });
+    });
+
+    this.connection.io.on('reconnect', () => {
+      liveInterfaces.videoController.displayMessage({
+        isMeta: true,
+        action: 'connect',
+      });
+    });
+
+    this.connection.on('disconnect', () => {
+      liveInterfaces.videoController.displayMessage({
+        isMeta: true,
+        action: 'disconnect',
+      });
     });
 
     //save the eventhandlers so they can be en/disabled dynamically
@@ -64,15 +79,6 @@ class WebsocketClient {
       return;
     }
 
-    if(message.flag === 'syncRequest' && liveInterfaces.videoController.streamJoined) {
-      const isPaused = liveInterfaces.videoController.isLiveVideo ? liveInterfaces.videoController.livePlayer.paused : liveInterfaces.videoController.video.paused();
-      this.sendMessage({
-        flag: 'syncResponse',
-        isPaused,
-        isLiveVideo: liveInterfaces.videoController.isLiveVideo,
-      });
-    }
-
     if(message.flag == 'webrtcSignal') {
       if(!liveInterfaces.webrtcClient.connection) return;
       liveInterfaces.webrtcClient.connection.signal(message.signal);
@@ -107,12 +113,20 @@ class WebsocketClient {
       return;
     }
 
-    console.log('message', message);
     liveInterfaces.videoController.displayMessage(message);
   }
 
   handleVideoControl(message) {
     message.flag = message.flag.replace('videoControl.', '');
+
+    if(message.flag === 'syncRequest' && liveInterfaces.videoController.streamJoined) {
+      const isPaused = liveInterfaces.videoController.isLiveVideo ? liveInterfaces.videoController.livePlayer.paused : liveInterfaces.videoController.video.paused();
+      this.sendMessage({
+        flag: 'videoControl.syncResponse',
+        isPaused,
+        isLiveVideo: liveInterfaces.videoController.isLiveVideo,
+      });
+    }
 
     if(message.flag == 'syncResponse') {
       if(liveInterfaces.videoController.isLiveVideo !== message.isLiveVideo) {
@@ -132,6 +146,7 @@ class WebsocketClient {
       if(liveInterfaces.videoController.streamJoined && 'isPaused' in message) {
         liveInterfaces.videoController.isPaused = message.isPaused;
         const action = message.isPaused ? 'pause' : 'play';
+
         if(liveInterfaces.videoController.isLiveVideo) {
           liveInterfaces.videoController.livePlayer[action]();
           liveInterfaces.videoController.isLivePaused = message.isPaused;
@@ -144,7 +159,7 @@ class WebsocketClient {
       message.action = 'syncAction';
     }
 
-    if(['syncResponse', 'syncToMe'].includes(message.flag)) {
+    if(['syncResponse', 'syncRequest', 'syncToMe'].includes(message.flag)) {
       return;
     }
 

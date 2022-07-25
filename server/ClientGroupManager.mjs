@@ -119,7 +119,7 @@ class ClientGroupManager {
 
           break;
         }
-        case 'syncRequest': {
+        case 'videoControl.syncRequest': {
           this.numResponsesRequested = Object
             .keys(this.clients).length - 1;
 

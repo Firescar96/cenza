@@ -92,6 +92,12 @@
               <p v-if="message.action == 'peerConnect'" class="indentMessage">
                 {{ message.name }} connected
               </p>
+              <p v-if="message.action == 'connect'" class="indentMessage">
+                Connected.
+              </p>
+              <p v-if="message.action == 'disconnect'" class="indentMessage">
+                Internet connection lost....trying to reconnect...
+              </p>
               <div v-if="message.action == 'clientStatus'" class="indentMessage">
                 <div class="clientStatusHeader clientStatusGroup">
                   <div class="clientStatusName">
@@ -101,7 +107,7 @@
                     Time
                   </div>
                 </div>
-                <div v-for="status in message.status" :key="status.name" class="clientStatusGroup">
+                <div v-for="(status, index) in message.status" :key="status.name+index" class="clientStatusGroup">
                   <div class="clientStatusName">
                     {{ status.name }}
                   </div>
@@ -310,7 +316,7 @@ class Live {
     this.notJoinedStream = false;
     this.streamJoined = true;
     //on join request an update to the current time and status of peers
-    this.liveInterfaces.websocketClient.sendMessage({ flag: 'syncRequest' });
+    this.liveInterfaces.websocketClient.sendMessage({ flag: 'videoControl.syncRequest' });
   }
 
   goFullScreen() {

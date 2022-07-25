@@ -2,6 +2,7 @@
 
 ### Features
 * Added about page
+* Better reconnection and user notifications after disconnect from websocket stream
 
 ### Bug Fixes
 * Nginx uses a docker container with limited cpu instead of a manually built instance on the server

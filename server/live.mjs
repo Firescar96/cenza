@@ -1,22 +1,22 @@
-import engineio from 'engine.io';
+import { Server } from 'socket.io';
 import httpServer from './server.mjs';
 import { ClientGroupManager } from './ClientGroupManager.mjs';
 
-const liveWS = engineio();
+const liveWS = new Server();
 
 liveWS.attach(httpServer, {
-  pingTimeout: 2000,
-  pingInterval: 4000,
-  transports: ['websocket'],
+  cors: {
+    origin: '*',
+  },
 });
 
 const streamClients = {};
 function onConnection(socket) {
   socket.once('message', (data) => {
     const message = JSON.parse(data);
-    socket.roomName = message.name;
-    streamClients[message.name] = streamClients[message.name] || new ClientGroupManager(message.name);
-    streamClients[message.name].addClient(socket);
+    socket.roomName = message.roomName;
+    streamClients[message.roomName] = streamClients[message.roomName] || new ClientGroupManager(message.roomName);
+    streamClients[message.roomName].addClient(socket);
   });
 
   socket.on('close', () => {

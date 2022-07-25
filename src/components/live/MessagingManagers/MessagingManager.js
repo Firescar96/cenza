@@ -5,14 +5,14 @@ import { generateName } from '@/utility';
 import liveInterfaces from '@/components/live/liveInterfaces';
 
 class MessagingManager {
-  initialize(lobbyName) {
-    this.lobbyName = lobbyName;
+  initialize(roomName) {
+    this.roomName = roomName;
     if(!this.myName) {
       this.myName = generateName();
     }
     this.isActiveTyping = false;
     this.ovenMediaClient = new OvenMediaRTCClient(this.videoController);
-    liveInterfaces.websocketClient.initialize();
+    liveInterfaces.websocketClient.initialize(roomName);
   }
 
   get myName() {

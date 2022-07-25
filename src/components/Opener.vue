@@ -12,7 +12,6 @@
 import Component from 'vue-class-component';
 import CenzaLogo from './cenza_logotype.svg';
 
-console.log(CenzaLogo);
 export default
 @Component({
   components: {
