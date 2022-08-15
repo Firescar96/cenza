@@ -1,44 +1,41 @@
 <template>
   <div id="livePage">
-    <div v-show="showLivePlayer && !notJoinedStream" id="jsmpeg-player" class="video-js vjs-live vjs-liveui">
-      <video ref="futuristicPlayer" autostart="0" />
-      <div class="jsmpeg-controls-bar vjs-control-bar">
-        <button v-if="!isLivePaused" class="vjs-play-control vjs-control vjs-button vjs-playing" type="button" title="Pause" @click="livePause">
-          <span aria-hidden="true" class="vjs-icon-placeholder" />
-        </button>
-        <button v-if="isLivePaused" class="vjs-play-control vjs-control vjs-button vjs-paused" type="button" title="Play" @click="livePlay">
-          <span aria-hidden="true" class="vjs-icon-placeholder" />
-        </button>
-        <div class="vjs-volume-panel vjs-control vjs-volume-panel-horizontal vjs-hover">
-          <div class="vjs-volume-control vjs-control vjs-volume-horizontal">
-            <input v-model="liveVolumeLevel" type="range" min="0" max="1" step=".01" class="slider" @change="liveUpdateVolume">
+    <div id="video-players">
+      <div v-show="isLiveVideo" id="jsmpeg-player" class="video-js vjs-live vjs-liveui">
+        <video ref="futuristicPlayer" />
+        <div class="jsmpeg-controls-bar vjs-control-bar">
+          <button v-if="!isLivePaused" class="vjs-play-control vjs-control vjs-button vjs-playing" type="button" title="Pause" @click="livePause">
+            <span aria-hidden="true" class="vjs-icon-placeholder" />
+          </button>
+          <button v-if="isLivePaused" class="vjs-play-control vjs-control vjs-button vjs-paused" type="button" title="Play" @click="livePlay">
+            <span aria-hidden="true" class="vjs-icon-placeholder" />
+          </button>
+          <div class="vjs-volume-panel vjs-control vjs-volume-panel-horizontal vjs-hover">
+            <div class="vjs-volume-control vjs-control vjs-volume-horizontal">
+              <input v-model="liveVolumeLevel" type="range" min="0" max="1" step=".01" class="slider" @change="liveUpdateVolume">
+            </div>
           </div>
+          <button class="vjs-fullscreen-control vjs-control vjs-button" type="button" title="Fullscreen" aria-disabled="false" @click="goFullScreen">
+            <span aria-hidden="true" class="vjs-icon-placeholder" />
+            <span class="vjs-control-text" aria-live="polite">Fullscreen</span>
+          </button>
         </div>
-        <button class="vjs-seek-to-live-control vjs-control vjs-at-live-edge" type="button" title="Seek to live, currently playing live" @click="liveUnlive">
-          <span aria-hidden="true" class="vjs-icon-placeholder" />
-          <span class="vjs-seek-to-live-text" aria-hidden="true">UNLIVE</span>
-        </button>
-        <button class="vjs-fullscreen-control vjs-control vjs-button" type="button" title="Fullscreen" aria-disabled="false" @click="goFullScreen">
-          <span aria-hidden="true" class="vjs-icon-placeholder" />
-          <span class="vjs-control-text" aria-live="polite">Fullscreen</span>
-        </button>
       </div>
-    </div>
 
-    <div v-show="showUnlivePlayer" id="unlive-player">
-      <video
-        ref="liveVid"
-        class="video-js vjs-default-skin vjs-has-started"
-      >
-        <source :src="'https://cenza.space:8395/hls/'+$route.params.stream+'.m3u8'" type="application/x-mpegURL">
-      </video>
-    </div>
+      <div v-show="!isLiveVideo" id="unlive-player">
+        <video
+          ref="liveVid"
+          class="video-js vjs-default-skin vjs-has-started"
+        >
+          <source :src="'https://cenza.space:8395/hls/'+$route.params.stream+'.m3u8'" type="application/x-mpegURL">
+        </video>
+      </div>
 
-    <div v-if="notJoinedStream" id="join-button" class="video-js">
-      <span>Join Stream</span>
-      <button class="vjs-big-play-button" title="Join Stream" @click="joinStream">
-        <span aria-hidden="true" class="vjs-icon-placeholder" />
-      </button>
+      <div v-if="!streamJoined" id="join-button">
+        <span class="material-icons vjs-big-play-button" @click="joinStream">
+          volume_up
+        </span>
+      </div>
     </div>
 
     <div id="chatSideBar" :class="{minimized: chatMinimized}">
@@ -46,15 +43,18 @@
 
       <div class="triggersContainer">
         <h3 id="chatTitle">
-          conTROLLbox - <span class="capitalize">{{ selectedSection }}</span>
+          conTROLLbox <span class="capitalize">{{ selectedSection }}</span>
         </h3>
       </div>
       <div class="triggersContainer">
-        <div @click="changeSection('comms')">
+        <div v-if="selectedSection != 'comms'" @click="changeSection('comms')">
           Comms
         </div>
-        <div @click="changeSection('settings')">
+        <div v-if="selectedSection != 'settings'" @click="changeSection('settings')">
           Settings
+        </div>
+        <div @click="isLiveVideo? switchToUnlive():switchToLive()">
+          Switch Player
         </div>
       </div>
       <div v-show="selectedSection == 'comms'" id="commsSection">
@@ -163,23 +163,19 @@ class Live {
     return {
       messages: [],
       newMessage: '',
-      triggerRemoteSync: false, //when false don't propagate actions to everyone, they are updating our local current time
       lastSyncedTime: null,
-      notJoinedStream: true,
       isPaused: true,
       isLivePaused: true,
-      isLiveVideo: null,
+      isLiveVideo: false,
       streamJoined: false,
       liveVolumeLevel: 1,
       showingProgressBar: false,
-      showLivePlayer: false,
-      showUnlivePlayer: false,
       currentlyTyping: [],
       isFullscreen: false,
       chatMinimized: false,
+      selectedSection: 'comms',
       //webrtc things
       peerStreams: [],
-      selectedSection: 'comms',
     };
   }
 
@@ -200,23 +196,23 @@ class Live {
 
   created() {
     liveInterfaces.videoController = this;
+    window.hello = this;
   }
 
-  setupFuturisticPlayer() {
-    this.livePlayer = this.$refs.futuristicPlayer;
-    this.livePlayer.srcObject = new MediaStream();
-    //this.livePlayer.pause();
+  get livePlayer() {
+    return this.$refs.futuristicPlayer;
   }
 
   async mounted() {
-    this.setupFuturisticPlayer();
     //initialize videojs with options
+
     this.video = videojs(this.$refs.liveVid, {
       preload: 'auto',
       controls: true,
       controlBar: {
         pictureInPictureToggle: false,
       },
+      bigPlayButton: false,
       html5: {
         vhs: {
           overrideNative: true,
@@ -253,11 +249,11 @@ class Live {
       this.video.controlBar.seekForward.on('click', eventHandlers.seekForward);
       this.video.controlBar.seekBack.on('click', eventHandlers.seekBack);
       this.video.controlBar.seekToLive.on('click', eventHandlers.seek);
-      //this.video.controlBar.seekToLive.on('click', () => {
-      //this.switchToLive();
-      //eventHandlers.seekToLive();
-      //});
+      this.video.volume(0);
     });
+
+    this.livePlayer.volume = 0;
+    this.livePlayer.pause();
 
     //overwrite the meaning of fullscreen so it always includes the chat
     this.video.requestFullscreen = this.goFullScreen;
@@ -312,11 +308,10 @@ class Live {
   }
 
   joinStream() {
-    this.showUnlivePlayer = true;
-    this.notJoinedStream = false;
     this.streamJoined = true;
-    //on join request an update to the current time and status of peers
-    this.liveInterfaces.websocketClient.sendMessage({ flag: 'videoControl.syncRequest' });
+    this.video.volume(1);
+    this.liveVolumeLevel = 1;
+    this.liveUpdateVolume();
   }
 
   goFullScreen() {
@@ -330,12 +325,16 @@ class Live {
     //on play resynchronize back to the beginning
     this.liveInterfaces.websocketClient.sendMessage({ flag: 'play', isPaused: false, action: 'syncAction' });
     this.isLivePaused = false;
+    this.isPaused = false;
+    //on the first join we need to reenable the liveplayer tracks, which were disabled on page load
+    this.livePlayer.srcObject.getTracks().forEach((x) => { x.enabled = true; });
   }
 
   livePause() {
     this.livePlayer.pause();
     this.liveInterfaces.websocketClient.sendMessage({ flag: 'pause', isPaused: true, action: 'syncAction' });
     this.isLivePaused = true;
+    this.isPaused = true;
   }
 
   liveUpdateVolume() {
@@ -348,15 +347,13 @@ class Live {
   }
 
   switchToLive() {
-    //disable unlive player events, then pause it
-    this.showUnlivePlayer = false;
-    this.showLivePlayer = true;
-
     this.video.pause();
-    this.livePlayer.play();
-    this.isLivePaused = false;
-    //on the first join we need to reenable the liveplayer tracks, which were disabled on page load
-    this.livePlayer.srcObject.getTracks().forEach((x) => { x.enabled = true; });
+    if(!this.isPaused) {
+      this.livePlayer.play();
+      this.isLivePaused = false;
+      //on the first join we need to reenable the liveplayer tracks, which were disabled on page load
+      this.livePlayer.srcObject.getTracks().forEach((x) => { x.enabled = true; });
+    }
 
     //when the player first starts is possible the user presses play before the player seekable ranges fully loaded
     if(this.livePlayer.seekable.length) this.livePlayer.currentTime = this.livePlayer.seekable.end(0);
@@ -364,9 +361,6 @@ class Live {
   }
 
   async switchToUnlive() {
-    this.showLivePlayer = false;
-    this.showUnlivePlayer = true;
-
     //order isn't important, but shutdown the live player before loading the unlive player
     this.livePlayer.pause();
     this.isLivePaused = true;
@@ -540,7 +534,6 @@ class Live {
     /* The default color of control backgrounds is mostly black but with a little
       bit of blue so it can still be seen on all-black video frames, which are common. */
     .vjs-control-bar,
-    .vjs-big-play-button,
     .vjs-menu-button .vjs-menu-content {
       background-color: rgba($primary-background-color, 0.9);
     }
@@ -583,37 +576,40 @@ class Live {
     }
   }
 
+  #video-players {
+    position: relative;
+    flex: 1;
+    display: flex;
+  }
+
   #unlive-player {
     flex: 1;
-
-    .vjs-big-play-button {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      border-color: $primary-background-color;
-    }
   }
 
   #join-button {
     display: flex;
+    position: absolute;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     width: 100%;
+    height: 100%;
     transition: all 1s;
-
-    &:hover .vjs-big-play-button {
-      background-color: rgba(0,0,0,.95);
-      border-color: $primary-foreground-color;
-    }
+    top: 0;
+    left: 0;
 
     .vjs-big-play-button {
       position: relative;
-      font-size: 2.5em;
-      border-radius: 0.2em;
-      outline: none;
-      left: 0;
+      font-size: 80px;
+      border-radius: 50%;
+      padding: 20px;
+      border: solid 5px rgba(0,0,0,.95);
+      cursor: pointer;
+      background-color: rgba(0,0,0,.95);
+
+      &:hover {
+        border-color: $primary-foreground-color;
+      }
     }
   }
 
@@ -639,6 +635,7 @@ class Live {
       color: #f008;
       padding: 0 10px;
       width: 300px;
+      text-align: center;
     }
 
     .triggersContainer {

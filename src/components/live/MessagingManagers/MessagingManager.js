@@ -11,7 +11,7 @@ class MessagingManager {
       this.myName = generateName();
     }
     this.isActiveTyping = false;
-    this.ovenMediaClient = new OvenMediaRTCClient(this.videoController);
+    liveInterfaces.ovenMediaClient.initialize(roomName);
     liveInterfaces.websocketClient.initialize(roomName);
   }
 

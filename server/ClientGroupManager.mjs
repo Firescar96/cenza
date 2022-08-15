@@ -48,12 +48,12 @@ class ClientGroupManager {
       'copy',
       '-f',
       'flv',
-      `rtmp://cenza.space:2935/live/${this.name}`,
+      `rtmp://cenza.space:1936/live/${this.name}`,
     ];
 
-    //this.mediaStream = forever.start(mediaSpawnOptions, {
-    //silent: true,
-    //});
+    this.mediaStream = forever.start(mediaSpawnOptions, {
+      silent: true,
+    });
   }
 
   addClient(ws) {
@@ -61,7 +61,7 @@ class ClientGroupManager {
     const clientObject = new WSClient(ws);
     this.clients[ws.id] = clientObject;
 
-    ws.on('close', () => {
+    ws.on('disconnect', () => {
       Object.values(this.clients).forEach((client) => {
         const message = { flag: 'peerDisconnect', name: this.clients[ws.id].name, lastFrameTime: client.lastFrameTime };
         client.websocket.send(JSON.stringify(message));
@@ -242,7 +242,7 @@ class ClientGroupManager {
     Object.values(this.clients).forEach((client) => {
       client.webrtcConnection.destroy();
     });
-    //this.mediaStream.kill();
+    this.mediaStream.kill();
   }
 }
 

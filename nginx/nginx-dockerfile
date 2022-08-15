@@ -1,10 +1,26 @@
-FROM alfg/nginx-rtmp
+FROM alpine
+# build and install nginx
+WORKDIR /root
+RUN apk add gcc make g++ zlib-dev pcre-dev git openssl-dev
+# add python
 RUN apk add --no-cache python3-dev py3-pip
 RUN pip install --upgrade pip
 # used by certbot
-RUN apk add --no-cache libffi-dev gcc musl-dev
+RUN apk add libffi-dev gcc musl-dev
+
+RUN wget https://nginx.org/download/nginx-1.23.1.tar.gz
+RUN tar xvf nginx-1.23.1.tar.gz
+RUN git clone https://github.com/arut/nginx-rtmp-module
+WORKDIR nginx-1.23.1
+RUN ./configure --add-module=../nginx-rtmp-module --with-stream --with-http_ssl_module
+RUN make
+RUN make install
+
+# update certificates, starting by adding python
 RUN pip install certbot-dns-google certbot
 COPY --chown=400 cenza-google-service.json cenza-google-service.json
 RUN certbot register -m nchinda2@gmail.com --no-eff-email --agree-tos
 RUN certbot certonly -d cenza.space --dns-google --dns-google-credentials cenza-google-service.json
-COPY nginx.config /etc/nginx/nginx.conf.template
+COPY nginx.config /root/nginx.config
+
+CMD ["/usr/local/nginx/sbin/nginx", "-c", "/root/nginx.config"]

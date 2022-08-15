@@ -1,18 +1,19 @@
+import liveInterfaces from '@/components/live/liveInterfaces';
+
 class OvenMediaRTCClient {
-  constructor(videoController) {
-    this.videoController = videoController;
+  initialize(roomName) {
     this.peerConnection = new RTCPeerConnection({
       iceServers: [
-        { urls: 'stun:stun.services.mozilla.com' },
-        { urls: 'stun:stun.l.google.com:19302' },
+        {
+          urls: 'turn:stun.cenza.space:3478',
+          username: 'user1',
+          credential: 'pass1',
+        },
       ],
     }, null);
-    this.initializeWS();
-  }
 
-  initializeWS() {
     //signalWS connects to OvenMediaPlayer to negotiate a WebRTC connection to get stream data
-    this.signalWS = new WebSocket('wss://cenza.space:3334/live/lobby');
+    this.signalWS = new WebSocket(`wss://cenza.space:3334/live/${roomName}`);
 
     this.signalWS.onmessage = this.gotMessageFromServer.bind(this);
 
@@ -28,10 +29,10 @@ class OvenMediaRTCClient {
     if(this.peerConnection.iceConnectionState === 'new') {
       this.peerConnection.onicecandidate = this.gotIceCandidate.bind(this);
 
-      this.videoController.livePlayer.srcObject = new MediaStream();
+      liveInterfaces.videoController.livePlayer.srcObject = new MediaStream();
       this.peerConnection.ontrack = (event) => {
-        event.track.enabled = !this.videoController.isLivePaused; //without this audio output will start immediately when users join the stream
-        this.videoController.livePlayer.srcObject.addTrack(event.track);
+        event.track.enabled = false;
+        liveInterfaces.videoController.livePlayer.srcObject.addTrack(event.track);
       };
 
       this.peerConnection.onconnectionstatechange = this.onconnectionstatechange.bind(this);
@@ -54,22 +55,10 @@ class OvenMediaRTCClient {
   }
 
   onconnectionstatechange() {
-    const repeaterID = setInterval(() => {
+    setInterval(() => {
       if(this.peerConnection.connectionState === 'disconnected') {
         this.peerConnection.close();
-        this.peerConnection = new RTCPeerConnection({
-          iceServers: [
-            { urls: 'stun:stun.services.mozilla.com' },
-            { urls: 'stun:stun.l.google.com:19302' },
-          ],
-        }, null);
-        this.initializeWS();
-        return;
-      }
-
-      clearInterval(repeaterID);
-      if(!this.videoController.isLivePaused) {
-        this.videoController.livePlayer.play();
+        this.initialize();
       }
     }, 500);
   }
@@ -84,4 +73,4 @@ class OvenMediaRTCClient {
   }
 }
 
-export default OvenMediaRTCClient;
+liveInterfaces.ovenMediaClient = new OvenMediaRTCClient();

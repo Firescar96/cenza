@@ -1,0 +1,14 @@
+FROM airensoft/ovenmediaengine:latest
+
+RUN apt-get install -y python3-pip
+
+# update certificates, starting by adding python
+RUN pip install certbot-dns-google certbot
+COPY --chown=400 cenza-google-service.json cenza-google-service.json
+RUN certbot register -m nchinda2@gmail.com --no-eff-email --agree-tos
+RUN certbot certonly -d cenza.space --dns-google --dns-google-credentials cenza-google-service.json
+
+COPY ./ome-edge-conf /opt/ovenmediaengine/bin/edge_conf
+COPY ./ome-origin-conf /opt/ovenmediaengine/bin/origin_conf
+
+CMD ["/opt/ovenmediaengine/bin/OvenMediaEngine", "-c", "/opt/ovenmediaengine/bin/origin_conf"]

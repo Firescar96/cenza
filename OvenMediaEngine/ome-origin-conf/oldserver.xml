@@ -54,13 +54,13 @@
 				<!-- 3274 is DASH as a number -->
 				<Port>${env:OME_HLS_STREAM_PORT:3274}</Port>
 				<!-- If you want to use TLS, specify the TLS port -->
-				<TLSPort>3275</TLSPort>
+				<!-- <TLSPort>3275</TLSPort> -->
 			</HLS>
 			<WebRTC>
 				<Signalling>
 					<Port>${env:OME_SIGNALLING_PORT:3333}</Port>
 					<!-- If you want to use TLS, specify the TLS port -->
-					<TLSPort>3334</TLSPort>
+					<!-- <TLSPort>3334</TLSPort> -->
 				</Signalling>
 				<IceCandidates>
 					<TcpRelay>${env:OME_TCP_RELAY_ADDRESS:*:3478}</TcpRelay>

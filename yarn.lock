@@ -951,6 +951,11 @@
   resolved "https://registry.npmjs.org/@humanwhocodes/object-schema/-/object-schema-1.2.0.tgz"
   integrity sha512-wdppn25U8z/2yiaT6YGquE6X8sSv7hNMWSXYSSU1jGv/yd6XqjXgTDJ8KP4NgjTXfJ3GbRjeeb8RTV7a/VpM+w==
 
+"@l7mp/stunner-auth-lib@^0.9.6":
+  version "0.9.6"
+  resolved "https://registry.yarnpkg.com/@l7mp/stunner-auth-lib/-/stunner-auth-lib-0.9.6.tgz#2fc8c602011a4599ce31f00f64c5dba31f2d5b62"
+  integrity sha512-aV3ESAG12RzvEM1fXeIjNpiFqY8AEKVfkLbtJCpVgN84UDwUfumPRZxNAm/+cuonEkBhY01mCZVP7g7otmE+5w==
+
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
   resolved "https://registry.npmjs.org/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz"

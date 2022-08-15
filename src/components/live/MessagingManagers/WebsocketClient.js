@@ -23,6 +23,9 @@ class WebsocketClient {
       }, 500);
 
       this.sendMessage({ flag: 'peerConnect', name: liveInterfaces.messagingManager.myName });
+
+      //on join request an update to the current time and status of peers
+      this.sendMessage({ flag: 'videoControl.syncRequest' });
     });
 
     this.connection.io.on('reconnect', () => {
@@ -41,8 +44,14 @@ class WebsocketClient {
 
     //save the eventhandlers so they can be en/disabled dynamically
     this.eventHandlers = {
-      play: (e) => this.sendMessage({ flag: 'videoControl.play', isPaused: false, action: 'syncAction' }),
-      pause: () => this.sendMessage({ flag: 'videoControl.pause', isPaused: true, action: 'syncAction' }),
+      play: (e) => {
+        liveInterfaces.videoController.isPaused = false;
+        this.sendMessage({ flag: 'videoControl.play', isPaused: false, action: 'syncAction' });
+      },
+      pause: () => {
+        liveInterfaces.videoController.isPaused = true;
+        this.sendMessage({ flag: 'videoControl.pause', isPaused: true, action: 'syncAction' });
+      },
       seek: () => this.sendMessage({ flag: 'videoControl.seek', replace: true, action: 'syncAction' }),
       seekForward: () => this.sendMessage({ flag: 'videoControl.seekForward', action: 'syncAction' }),
       seekBack: () => this.sendMessage({ flag: 'videoControl.seekBack', action: 'syncAction' }),
@@ -119,7 +128,7 @@ class WebsocketClient {
   handleVideoControl(message) {
     message.flag = message.flag.replace('videoControl.', '');
 
-    if(message.flag === 'syncRequest' && liveInterfaces.videoController.streamJoined) {
+    if(message.flag === 'syncRequest') {
       const isPaused = liveInterfaces.videoController.isLiveVideo ? liveInterfaces.videoController.livePlayer.paused : liveInterfaces.videoController.video.paused();
       this.sendMessage({
         flag: 'videoControl.syncResponse',
@@ -138,12 +147,12 @@ class WebsocketClient {
     if(message.flag === 'seekToLive') liveInterfaces.videoController.switchToLive();
     if(message.flag === 'seekToUnlive') liveInterfaces.videoController.switchToUnlive();
 
-    if(['play', 'pause', 'seek', 'seekBack', 'seekForward', 'seekToLive', 'syncResponse', 'syncToMe'].includes(message.flag) && liveInterfaces.videoController.streamJoined) {
+    if(['play', 'pause', 'seek', 'seekBack', 'seekForward', 'seekToLive', 'syncResponse', 'syncToMe'].includes(message.flag)) {
       if(!liveInterfaces.videoController.isLiveVideo && message.lastFrameTime) {
         liveInterfaces.videoController.video.currentTime(message.lastFrameTime);
       }
 
-      if(liveInterfaces.videoController.streamJoined && 'isPaused' in message) {
+      if('isPaused' in message) {
         liveInterfaces.videoController.isPaused = message.isPaused;
         const action = message.isPaused ? 'pause' : 'play';
 

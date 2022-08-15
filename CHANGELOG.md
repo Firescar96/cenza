@@ -1,3 +1,15 @@
+# 3.1.0 - Catalytic Rearrangement Reaction
+
+### Features
+* Big Play Button is replaced with an unmute button, as the play button was confusing
+* Added notification to user when dis/reconnects due to internet connection failure
+* Added automatic reconnection for dropped websocket connections
+* Readded live streaming on kubernetes supported by self hosted [l7mp/stunner](https://github.com/l7mp/stunner) instance
+
+### Bug Fixes
+* Fix the refresh button looking like an X even when the page finished loading
+* Fix issue where joining and leaving stream too fast breaks the server
+
 # 3.0.1
 
 ### Features

@@ -5,10 +5,6 @@ import liveInterfaces from '@/components/live/liveInterfaces';
 const { SimplePeer } = window;
 
 @Component({
-  props: {
-    videoController: Object,
-    websocketConnection: Object,
-  },
   setup() {
     return {
       audioInputs: shallowRef([]),

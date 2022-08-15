@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: cenza-ome
+  name: cenza-ome
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cenza-ome
+  template:
+    metadata:
+      labels:
+        app: cenza-ome
+    spec:
+      containers:
+      - image: gcr.io/firescar96/cenza-ome:current
+        imagePullPolicy: Always
+        name: cenza-ome-1
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
