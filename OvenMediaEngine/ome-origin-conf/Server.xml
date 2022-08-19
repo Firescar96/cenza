@@ -32,12 +32,6 @@
 		</Providers>
 
 		<Publishers>
-			<HLS>
-				<!-- 3274 is DASH as a number -->
-				<Port>${env:OME_HLS_STREAM_PORT:3274}</Port>
-				<!-- If you want to use TLS, specify the TLS port -->
-				<TLSPort>3275</TLSPort>
-			</HLS>
 			<WebRTC>
 				<Signalling>
 					<Port>${env:OME_SIGNALLING_PORT:3333}</Port>

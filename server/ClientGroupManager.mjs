@@ -21,39 +21,6 @@ class ClientGroupManager {
       const source = path.resolve(process.cwd(), 'server/base.m3u8');
       fs.copyFileSync(source, hlsManifestPath);
     }
-
-    //helpful documentation on ffmpeg streaming https://trac.ffmpeg.org/wiki/StreamingGuide
-    //and on some flags https://ffmpeg.org/ffmpeg-all.html#rtsp
-    //what do the numbers in an avc codec mean https://lists.ffmpeg.org/pipermail/ffmpeg-user/2015-October/028984.html
-    //https://stackoverflow.com/questions/48588511/prepare-mp4-videos-for-media-source-extensions-api-using-ffmpeg
-    //a pretty complete list of ffmpeg flags https://gist.github.com/tayvano/6e2d456a9897f55025e25035478a3a50
-    //copies the data from the rtmp live stream over to nginx for a playlist
-    const mediaSpawnOptions = [
-      'ffmpeg',
-      '-i',
-      `http://cenza.space:3274/live/${this.name}/playlist.m3u8`,
-      '-reconnect',
-      '1',
-      '-reconnect_at_eof',
-      '1',
-      '-reconnect_streamed',
-      '1',
-      '-reconnect_delay_max',
-      '10',
-      '-strict',
-      'experimental',
-      '-vcodec',
-      'copy',
-      '-acodec',
-      'copy',
-      '-f',
-      'flv',
-      `rtmp://cenza.space:1936/live/${this.name}`,
-    ];
-
-    this.mediaStream = forever.start(mediaSpawnOptions, {
-      silent: true,
-    });
   }
 
   addClient(ws) {
@@ -242,7 +209,6 @@ class ClientGroupManager {
     Object.values(this.clients).forEach((client) => {
       client.webrtcConnection.destroy();
     });
-    this.mediaStream.kill();
   }
 }
 

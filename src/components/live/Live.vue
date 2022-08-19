@@ -2,7 +2,7 @@
   <div id="livePage">
     <div id="video-players">
       <div v-show="isLiveVideo" id="jsmpeg-player" class="video-js vjs-live vjs-liveui">
-        <video ref="futuristicPlayer" />
+        <video ref="futuristicPlayer" preload="metadata" />
         <div class="jsmpeg-controls-bar vjs-control-bar">
           <button v-if="!isLivePaused" class="vjs-play-control vjs-control vjs-button vjs-playing" type="button" title="Pause" @click="livePause">
             <span aria-hidden="true" class="vjs-icon-placeholder" />
@@ -53,7 +53,7 @@
         <div v-if="selectedSection != 'settings'" @click="changeSection('settings')">
           Settings
         </div>
-        <div @click="isLiveVideo? switchToUnlive():switchToLive()">
+        <div @click="togglePlayer">
           Switch Player
         </div>
       </div>
@@ -346,17 +346,24 @@ class Live {
     this.liveInterfaces.websocketClient.sendMessage({ flag: 'seekToUnlive', replace: true, action: 'syncAction' });
   }
 
+  togglePlayer() {
+    if(this.isLiveVideo) {
+      this.switchToUnlive();
+      this.liveInterfaces.websocketClient.sendMessage({ flag: 'videoControl.seekToUnlive', isPaused: false, action: 'syncAction' });
+    } else {
+      this.switchToLive();
+      this.liveInterfaces.websocketClient.sendMessage({ flag: 'videoControl.seekToLive', isPaused: false, action: 'syncAction' });
+    }
+  }
+
   switchToLive() {
     this.video.pause();
     if(!this.isPaused) {
       this.livePlayer.play();
       this.isLivePaused = false;
-      //on the first join we need to reenable the liveplayer tracks, which were disabled on page load
-      this.livePlayer.srcObject.getTracks().forEach((x) => { x.enabled = true; });
     }
-
-    //when the player first starts is possible the user presses play before the player seekable ranges fully loaded
-    if(this.livePlayer.seekable.length) this.livePlayer.currentTime = this.livePlayer.seekable.end(0);
+    //on the first join we need to reenable the liveplayer tracks, which were disabled on page load
+    this.livePlayer.srcObject.getTracks().forEach((x) => { x.enabled = true; });
     this.isLiveVideo = true;
   }
 
@@ -376,7 +383,6 @@ class Live {
 
     //even if it gets paused later
     if(this.isPaused) this.video.pause();
-
     this.isLiveVideo = false;
   }
 

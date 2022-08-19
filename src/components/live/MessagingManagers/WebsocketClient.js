@@ -126,9 +126,9 @@ class WebsocketClient {
   }
 
   handleVideoControl(message) {
-    message.flag = message.flag.replace('videoControl.', '');
+    const videoControlFlag = message.flag.replace('videoControl.', '');
 
-    if(message.flag === 'syncRequest') {
+    if(videoControlFlag === 'syncRequest') {
       const isPaused = liveInterfaces.videoController.isLiveVideo ? liveInterfaces.videoController.livePlayer.paused : liveInterfaces.videoController.video.paused();
       this.sendMessage({
         flag: 'videoControl.syncResponse',
@@ -137,17 +137,17 @@ class WebsocketClient {
       });
     }
 
-    if(message.flag == 'syncResponse') {
+    if(videoControlFlag == 'syncResponse') {
       if(liveInterfaces.videoController.isLiveVideo !== message.isLiveVideo) {
         if(message.isLiveVideo) liveInterfaces.videoController.switchToLive();
         else liveInterfaces.videoController.switchToUnlive();
       }
     }
 
-    if(message.flag === 'seekToLive') liveInterfaces.videoController.switchToLive();
-    if(message.flag === 'seekToUnlive') liveInterfaces.videoController.switchToUnlive();
+    if(videoControlFlag === 'seekToLive') liveInterfaces.videoController.switchToLive();
+    if(videoControlFlag === 'seekToUnlive') liveInterfaces.videoController.switchToUnlive();
 
-    if(['play', 'pause', 'seek', 'seekBack', 'seekForward', 'seekToLive', 'syncResponse', 'syncToMe'].includes(message.flag)) {
+    if(['play', 'pause', 'seek', 'seekBack', 'seekForward', 'seekToLive', 'syncResponse', 'syncToMe'].includes(videoControlFlag)) {
       if(!liveInterfaces.videoController.isLiveVideo && message.lastFrameTime) {
         liveInterfaces.videoController.video.currentTime(message.lastFrameTime);
       }
@@ -163,12 +163,12 @@ class WebsocketClient {
       }
     }
 
-    if(['play', 'pause', 'seek', 'seekBack', 'seekForward', 'seekToLive', 'seekToUnlive'].includes(message.flag)) {
+    if(['play', 'pause', 'seek', 'seekBack', 'seekForward', 'seekToLive', 'seekToUnlive'].includes(videoControlFlag)) {
       message.isMeta = true;
       message.action = 'syncAction';
     }
 
-    if(['syncResponse', 'syncRequest', 'syncToMe'].includes(message.flag)) {
+    if(['syncResponse', 'syncRequest', 'syncToMe'].includes(videoControlFlag)) {
       return;
     }
 
